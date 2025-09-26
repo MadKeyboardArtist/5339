@@ -1,0 +1,12 @@
+# COMP5339 Assignment 1 — Python dependencies
+pandas
+numpy
+SQLAlchemy
+geoalchemy2
+psycopg2-binary
+matplotlib
+geopandas
+contextily
+tqdm
+googlemaps
+openpyxl
