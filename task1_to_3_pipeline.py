@@ -42,13 +42,13 @@ def task_1_data_retrieval ():
         "date_start": "2025-10-06T00:00:00",     
         "date_end":   "2025-10-12T23:55:00",
     }
-    Path("data_raw_KS").mkdir(exist_ok=True)
+    Path("data_raw").mkdir(exist_ok=True)
 
     # 1.2 requests:
     # power
     p = requests.get(url, headers=HEADERS, params={**common, "metrics": ["power"]}, timeout=60)
     p.raise_for_status()
-    with open("data_raw_KS/NEM_ERARING_power_5m.json", "w", encoding="utf-8") as f:
+    with open("data_raw/NEM_ERARING_power_5m.json", "w", encoding="utf-8") as f:
         json.dump(p.json(), f, ensure_ascii=False, indent=2)
     print("power saved")
 
@@ -57,7 +57,7 @@ def task_1_data_retrieval ():
     # emissions
     e = requests.get(url, headers=HEADERS, params={**common, "metrics": ["emissions"]}, timeout=60)
     e.raise_for_status()
-    with open("data_raw_KS/NEM_ERARING_emissions_5m.json", "w", encoding="utf-8") as f:
+    with open("data_raw/NEM_ERARING_emissions_5m.json", "w", encoding="utf-8") as f:
         json.dump(e.json(), f, ensure_ascii=False, indent=2)
     print("emissions saved")
 
@@ -72,7 +72,7 @@ Output: NEM_ERARING_power_emissions_cleaned.csv
 '''
 def task_2_data_integration_and_cleaning():
     # 2.1 merge power.csv
-    with open("data_raw_KS/NEM_ERARING_power_5m.json", encoding="utf-8") as f:
+    with open("data_raw/NEM_ERARING_power_5m.json", encoding="utf-8") as f:
         j_power = json.load(f)
 
     rows = []
@@ -84,11 +84,11 @@ def task_2_data_integration_and_cleaning():
             for ts, val in series.get("data", []):
                 rows.append({"timestamp": ts, "unit_code": unit_code, "power_MW": val})
     df_power = pd.DataFrame(rows)
-    df_power.to_csv("data_raw_KS/NEM_ERARING_power_5m.csv", index=False)
-    print("saved: data_raw_KS/NEM_ERARING_power_5m.csv")
+    df_power.to_csv("data_raw/NEM_ERARING_power_5m.csv", index=False)
+    print("saved: data_raw/NEM_ERARING_power_5m.csv")
 
     # 2.2 merge emissions.csv
-    with open("data_raw_KS/NEM_ERARING_emissions_5m.json", encoding="utf-8") as f:
+    with open("data_raw/NEM_ERARING_emissions_5m.json", encoding="utf-8") as f:
         j_emis = json.load(f)
 
     rows = []
@@ -100,13 +100,13 @@ def task_2_data_integration_and_cleaning():
             for ts, val in series.get("data", []):
                 rows.append({"timestamp": ts, "unit_code": unit_code, "emissions_tCO2e": val})
     df_emis = pd.DataFrame(rows)
-    df_emis.to_csv("data_raw_KS/NEM_ERARING_emissions_5m.csv", index=False)
-    print(" saved: data_raw_KS/NEM_ERARING_emissions_5m.csv")
+    df_emis.to_csv("data_raw/NEM_ERARING_emissions_5m.csv", index=False)
+    print(" saved: data_raw/NEM_ERARING_emissions_5m.csv")
 
     # 2.3 data cleaning steps
     # 1. read files
-    df_p = pd.read_csv("data_raw_KS/NEM_ERARING_power_5m.csv")
-    df_e = pd.read_csv("data_raw_KS/NEM_ERARING_emissions_5m.csv")
+    df_p = pd.read_csv("data_raw/NEM_ERARING_power_5m.csv")
+    df_e = pd.read_csv("data_raw/NEM_ERARING_emissions_5m.csv")
     # 2. exchange time
     df_p["timestamp"] = pd.to_datetime(df_p["timestamp"])
     df_e["timestamp"] = pd.to_datetime(df_e["timestamp"])
@@ -121,8 +121,8 @@ def task_2_data_integration_and_cleaning():
     # 5. emission intensity
     df["emission_intensity_tCO2_MWh"] = df["emissions_tCO2e"] / df["power_MW"]
     # 6. output
-    df.to_csv("data_raw_KS/NEM_ERARING_power_emissions_cleaned.csv", index=False)
-    print("saved → data_raw_KS/NEM_ERARING_power_emissions_cleaned.csv")
+    df.to_csv("data_raw/NEM_ERARING_power_emissions_cleaned.csv", index=False)
+    print("saved → data_raw/NEM_ERARING_power_emissions_cleaned.csv")
 
     return
 ################################################################
@@ -138,7 +138,7 @@ Output: Live messages, on TOPIC = nem/usyd/comp5339/540124550/stream
 
 # 3.0 MQTT consifs
 # basic settings
-CSV_PATH   = "data_raw_KS/NEM_ERARING_power_emissions_cleaned.csv"
+CSV_PATH   = "data_raw/NEM_ERARING_power_emissions_cleaned.csv"
 BROKER     = "test.mosquitto.org"     
 PORT       = 1883
 TOPIC      = "nem/usyd/comp5339/540124550/stream"  
