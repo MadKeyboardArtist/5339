@@ -11,6 +11,8 @@ from dateutil import parser as dtparser
 from tqdm import tqdm
 import paho.mqtt.client as mqtt
 
+DATA_FOLDER = "data_raw"
+
 # 1. Task1
 '''
 Task 1: Data Retrieval		
