@@ -11,6 +11,9 @@ from dateutil import parser as dtparser
 from tqdm import tqdm
 import paho.mqtt.client as mqtt
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 DATA_FOLDER = "data_raw"
 
 # 1. Task1
@@ -21,7 +24,9 @@ Output: Two JSON files (*_power_5m.json, *_emissions_5m.json)
 '''
 
 def task_1_data_retrieval ():
+    print("task 1 START")
     # 1.0 request avaliability checking
+    '''
     API_KEY = "oe_3ZkPHh9ctU2nmLzHQhVi26tZ"
     r = requests.get(
         "https://api.openelectricity.org.au/v4/me",
@@ -31,6 +36,7 @@ def task_1_data_retrieval ():
     print("status:", r.status_code)
     print(r.text)
     r.raise_for_status()
+    '''
     
     # 1.1 retrieval configs
     API_BASE = "https://api.openelectricity.org.au/v4"
@@ -52,7 +58,7 @@ def task_1_data_retrieval ():
     p.raise_for_status()
     with open("data_raw/NEM_ERARING_power_5m.json", "w", encoding="utf-8") as f:
         json.dump(p.json(), f, ensure_ascii=False, indent=2)
-    print("power saved")
+    print("1.1 retrieved power saved")
 
     time.sleep(0.5)  
 
@@ -61,8 +67,10 @@ def task_1_data_retrieval ():
     e.raise_for_status()
     with open("data_raw/NEM_ERARING_emissions_5m.json", "w", encoding="utf-8") as f:
         json.dump(e.json(), f, ensure_ascii=False, indent=2)
-    print("emissions saved")
+    print("1.1 retrieved emissions saved")
 
+    print("task 1 retrieval DONE")
+    print("")
     return
 
 #################################################################################################
@@ -73,6 +81,7 @@ Purpose: Convert both JSONs → CSV, merge them, clean values, and compute emiss
 Output: NEM_ERARING_power_emissions_cleaned.csv
 '''
 def task_2_data_integration_and_cleaning():
+    print("task 2 START")
     # 2.1 merge power.csv
     with open("data_raw/NEM_ERARING_power_5m.json", encoding="utf-8") as f:
         j_power = json.load(f)
@@ -87,7 +96,7 @@ def task_2_data_integration_and_cleaning():
                 rows.append({"timestamp": ts, "unit_code": unit_code, "power_MW": val})
     df_power = pd.DataFrame(rows)
     df_power.to_csv("data_raw/NEM_ERARING_power_5m.csv", index=False)
-    print("saved: data_raw/NEM_ERARING_power_5m.csv")
+    print("2.1 merge result saved: data_raw/NEM_ERARING_power_5m.csv")
 
     # 2.2 merge emissions.csv
     with open("data_raw/NEM_ERARING_emissions_5m.json", encoding="utf-8") as f:
@@ -103,7 +112,7 @@ def task_2_data_integration_and_cleaning():
                 rows.append({"timestamp": ts, "unit_code": unit_code, "emissions_tCO2e": val})
     df_emis = pd.DataFrame(rows)
     df_emis.to_csv("data_raw/NEM_ERARING_emissions_5m.csv", index=False)
-    print(" saved: data_raw/NEM_ERARING_emissions_5m.csv")
+    print("2.1 merge result saved: data_raw/NEM_ERARING_emissions_5m.csv")
 
     # 2.3 data cleaning steps
     # 1. read files
@@ -124,8 +133,10 @@ def task_2_data_integration_and_cleaning():
     df["emission_intensity_tCO2_MWh"] = df["emissions_tCO2e"] / df["power_MW"]
     # 6. output
     df.to_csv("data_raw/NEM_ERARING_power_emissions_cleaned.csv", index=False)
-    print("saved → data_raw/NEM_ERARING_power_emissions_cleaned.csv")
-
+    print("2.2 cleaning result saved → data_raw/NEM_ERARING_power_emissions_cleaned.csv")
+    
+    print("task 2 merge & cleaning DONE")
+    print("")
     return
 ################################################################
 # Task3
@@ -199,6 +210,7 @@ def row_to_payload(row, have_cols):
 
 # def one_complete_MQTT_round():
 def task_3_MQTT_data_publishing():
+    print("task 3 START")
     # 1. access data source
     if not os.path.exists(CSV_PATH):
         raise FileNotFoundError(CSV_PATH)
@@ -238,20 +250,20 @@ def task_3_MQTT_data_publishing():
         # MQTT should always be cleanly stopped and disconnected
         client.loop_stop()
         client.disconnect()
-        print("Done.")
+        print("task 3 MQTT publish topic DONE")
 
 if __name__ == "__main__":
     import time
     ROUNDS = 3
     for round_i in range(1, ROUNDS + 1):
-        print(f"\n[MAIN] Round {round_i} starting...")
+        print(f"\n[MAIN] [1_to_3 script] Round {round_i} starting...")
         task_1_data_retrieval()
         task_2_data_integration_and_cleaning()
         task_3_MQTT_data_publishing()
         if round_i < ROUNDS:
-            print("[MAIN] Sleeping 60s before next round...")
+            print("[MAIN] [1_to_3 script] Sleeping 60s before next round...")
             time.sleep(60)
-    print("[MAIN] Publisher finished all rounds.")
+    print("[MAIN] [1_to_3 script] Publisher finished all rounds.")
 
 
 

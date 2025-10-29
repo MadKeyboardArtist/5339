@@ -8,6 +8,9 @@ import folium
 from folium.plugins import MarkerCluster
 from pathlib import Path
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 # ============ MQTT Settings ============
 BROKER = "test.mosquitto.org"
 PORT = 1883
@@ -61,7 +64,8 @@ def map_updater(interval=5):
             folium.Marker([d["lat"], d["lon"]], popup=popup).add_to(marker_cluster)
 
         m.save(MAP_PATH)
-        print(f"[MAP] Updated: {len(facility_data)} facilities -> {MAP_PATH.name}")
+        # remove output for not breaking the terminal output
+        # print(f"[MAP] Updated: {len(facility_data)} facilities -> {MAP_PATH.name}")
         time.sleep(interval)
 
 # ============ Run the Subscriber ============
